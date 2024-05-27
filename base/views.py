@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.http import JsonResponse
 import random
 import time
@@ -6,8 +6,9 @@ from agora_token_builder import RtcTokenBuilder
 from .models import RoomMember
 import json
 from django.views.decorators.csrf import csrf_exempt
-
-
+from django.contrib.auth.forms import UserCreationForm
+from django.urls import reverse_lazy
+from django.views import generic
 
 # Create your views here.
 
@@ -16,7 +17,6 @@ def lobby(request):
 
 def room(request):
     return render(request, 'base/room.html')
-
 
 def getToken(request):
     appId = "da4098b281b84e7c819ae476d6e56f6e"
@@ -32,7 +32,6 @@ def getToken(request):
 
     return JsonResponse({'token': token, 'uid': uid}, safe=False)
 
-
 @csrf_exempt
 def createMember(request):
     data = json.loads(request.body)
@@ -42,8 +41,7 @@ def createMember(request):
         room_name=data['room_name']
     )
 
-    return JsonResponse({'name':data['name']}, safe=False)
-
+    return JsonResponse({'name': data['name']}, safe=False)
 
 def getMember(request):
     uid = request.GET.get('UID')
@@ -54,7 +52,7 @@ def getMember(request):
         room_name=room_name,
     )
     name = member.name
-    return JsonResponse({'name':member.name}, safe=False)
+    return JsonResponse({'name': name}, safe=False)
 
 @csrf_exempt
 def deleteMember(request):
@@ -66,3 +64,8 @@ def deleteMember(request):
     )
     member.delete()
     return JsonResponse('Member deleted', safe=False)
+
+class SignUpView(generic.CreateView):
+    form_class = UserCreationForm
+    success_url = reverse_lazy('login')
+    template_name = 'registration/signup.html'
